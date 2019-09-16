@@ -9,7 +9,7 @@ class AuthHeader{
     if( !\in_array($sign_meth,$sign_meths) ){
       throw new \Exception("[{$sign_meth}]: not accepted for signature method! Only " . \implode(', ',$sign_meths) . " allowed.", 1);
     }
-    if (!$app = new DevApp($app,$pu_key)) {
+    if (!$app_object = new DevApp($app,$pu_key)) {
       throw new \Exception("Developer App '{$app}' not found.", 1);
     }
     $header = [
@@ -20,7 +20,7 @@ class AuthHeader{
       "Signature-Method" => $sign_meth
     ];
     $tym = \time();
-    $hash_string = "{$app->prefix}&{$app}&{$pr_key}&{$sign_meth}&{$tym}";
+    $hash_string = "{$app_object->prefix}&{$app}&{$pr_key}&{$sign_meth}&{$tym}";
     $header["Tymstamp"] = $tym;
     $header["Auth-Signature"] = \base64_encode(\hash($sign_meth,$hash_string));
     return $header;
