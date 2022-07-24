@@ -2,6 +2,7 @@
 namespace TymFrontiers\API;
 
 class AuthHeader{
+  private static $_conn;
 
   public static function generate (string $app, string $pu_key, string $pr_key, string $sign_meth="sha512", string $accept = "application/json", string $content_type = "application/json") {
     $sign_meth = \strtolower($sign_meth);
@@ -9,7 +10,13 @@ class AuthHeader{
     if( !\in_array($sign_meth,$sign_meths) ){
       throw new \Exception("[{$sign_meth}]: not accepted for signature method! Only " . \implode(', ',$sign_meths) . " allowed.", 1);
     }
-    if (!$app_object = new DevApp($app,$pu_key)) {
+    global $database;
+    if ((empty($database) || !$database instanceof \TymFrontiers\MySQLDatabase) && !self::$_conn) {
+      throw new \Exception("No Database connection defned", 1);
+    }
+    $conn = self::$_conn ? self::$_conn : $database;
+    $app_object = new DevApp($conn, $conn->getDatabase());
+    if (!$app_object->load($app, $pu_key, true)) {
       throw new \Exception("Developer App '{$app}' not found.", 1);
     }
     $header = [
@@ -24,5 +31,8 @@ class AuthHeader{
     $header["Tymstamp"] = $tym;
     $header["Auth-Signature"] = \base64_encode(\hash($sign_meth,$hash_string));
     return $header;
+  }
+  public function setConnection (\TymFrontiers\MySQLDatabase $conn) {
+    static::$_conn = $conn;
   }
 }
